@@ -5,7 +5,6 @@ const User = require('./models/user');
 app.use(express.json());
 
 app.post('/signup', async (req, res) => {
-    console.log(req.body);
     try {
         const newUser = new User(req.body);
         await newUser.save();
@@ -54,16 +53,39 @@ app.delete('/user', async (req, res) => {
     }
 })
 
-app.patch('/user', async (req, res) => {
+app.patch('/user/:userId', async (req, res) => {
+    const userId = req.params?.userId;
+    const data = req.body;
     try {
-        const user = await User.findByIdAndUpdate(req.body.userId, req.body)
+        const ALLOWED_UPDATES = ["age", "skills", "photoURL", "gender"];
+        const isUpdateValid = Object.keys(data).every((update) => ALLOWED_UPDATES.includes(update));
+        if(!isUpdateValid) {
+            return res.status(400).send("Invalid updates!");
+        }
+        if(data?.age && (data.age < 18 || data.age > 80)) {
+            return res.status(400).send("Age must be between 18 and 80");
+        }
+        if(data?.skills && !Array.isArray(data.skills)) {
+            return res.status(400).send("Skills must be an array of strings");
+        }
+        if(data?.skills.length > 12){
+            return res.status(400).send("Skills cannot exceed 12 items");
+        }
+        if(data?.photoURL && typeof data.photoURL !== 'string') {
+            return res.status(400).send("photoURL must be a string");
+        }
+        if(data?.gender && !['Male', 'Female', 'Other'].includes(data.gender)) {
+            return res.status(400).send("Gender must be Male, Female, or Other");
+        }
+
+        const user = await User.findByIdAndUpdate(userId, req.body, { new: true, runValidators: true });
         if(!user) {
             return res.status(404).send("User not found");
         }else {
-            res.send("User updated successfully");
+            res.send("User updated successfully", user);
         }
     } catch (err) {
-        res.status(404).send("Something went wrong: ", err.message);
+        res.status(404).send("Error while Updating User: ", err.message);
     }
 })
 
