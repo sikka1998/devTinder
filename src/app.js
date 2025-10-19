@@ -9,8 +9,8 @@ app.post('/signup', async (req, res) => {
         const newUser = new User(req.body);
         await newUser.save();
         res.send("User created successfully!");
-    } catch (err) {
-        res.send("Error in creating user: ", err.message);
+    } catch (error) {
+        res.send("Error in creating user: ", error.message);
     }
 })
 
