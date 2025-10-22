@@ -3,9 +3,13 @@ const app = express();
 const connectDB = require('./config/database');
 const User = require('./models/user');
 const { validationOnSignUp } = require('./helper/helper');
-app.use(express.json());
 const bcrypt = require('bcrypt');
 const validator = require('validator');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+
+app.use(express.json());
+app.use(cookieParser());
 
 app.post('/signup', async (req, res) => {
     try {
@@ -40,9 +44,34 @@ app.post('/login', async (req, res) => {
         if(!isPasswordValid) {
             throw new Error("Invalid Login Credentials");
         }
+
+        const token = jwt.sign({ userId: user._id }, 'devTinder@7777');
+
+        res.cookie('authToken', token);
         res.send("User logged in successfully!");
     } catch (err) {
         res.status(400).send("Error while logging in: " + err.message);
+    }
+})
+
+app.get('/profile', async (req, res) => {
+    try {
+        const { authToken } = req.cookies;
+        if(!authToken) {
+            return res.status(401).send("Unauthorized: No token provided");
+        }
+        const decoded = jwt.verify(authToken, 'devTinder@7777');
+        const { userId } = decoded;
+        const user = await User.findOne({ _id: userId });
+        if(!user) {
+            return res.status(404).send("User not found");
+        }
+        res.send({
+            "message": "User Profile Fetched Successfully",
+            "data": user
+        });
+    } catch (err) {
+        res.send("Error while fetching profile: " + err.message);
     }
 })
 
