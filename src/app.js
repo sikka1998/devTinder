@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const validator = require('validator');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const { authUser } = require('./middlewares/auth');
 
 app.use(express.json());
 app.use(cookieParser());
@@ -45,35 +46,30 @@ app.post('/login', async (req, res) => {
             throw new Error("Invalid Login Credentials");
         }
 
-        const token = jwt.sign({ userId: user._id }, 'devTinder@7777');
+        const token = jwt.sign({ userId: user._id }, 'devTinder@7777', { expiresIn: '7d' });
 
-        res.cookie('authToken', token);
+        res.cookie('authToken', token, {expires: new Date(Date.now() + 7*24*60*60*1000)});
         res.send("User logged in successfully!");
     } catch (err) {
         res.status(400).send("Error while logging in: " + err.message);
     }
 })
 
-app.get('/profile', async (req, res) => {
-    try {
-        const { authToken } = req.cookies;
-        if(!authToken) {
-            return res.status(401).send("Unauthorized: No token provided");
-        }
-        const decoded = jwt.verify(authToken, 'devTinder@7777');
-        const { userId } = decoded;
-        const user = await User.findOne({ _id: userId });
-        if(!user) {
-            return res.status(404).send("User not found");
-        }
+app.get('/profile', authUser, (req, res) => {
+        const user = req.user;
         res.send({
             "message": "User Profile Fetched Successfully",
             "data": user
         });
-    } catch (err) {
-        res.send("Error while fetching profile: " + err.message);
-    }
 })
+
+app.post('/sendConnectionRequest', authUser, async (req, res) => {
+    console.log("Authenticated User: ", req.user);
+    console.log("Sending Connection Request");
+    res.send({
+        "message": "Connection Request Sent Successfully"
+    });
+});
 
 app.get('/user', async (req, res) => {
     try {
