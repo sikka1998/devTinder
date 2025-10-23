@@ -33,7 +33,7 @@ app.post('/signup', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     try {
-        const {emailId, password } = req.body;
+        const { emailId, password } = req.body;
         if(!validator.isEmail(emailId)) {
             throw new Error("Invalid email format");
         }
@@ -41,12 +41,12 @@ app.post('/login', async (req, res) => {
         if(!user) {
             throw new Error("Invalid Login Credentials");
         }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await user.verifyPassword(password);
         if(!isPasswordValid) {
             throw new Error("Invalid Login Credentials");
         }
 
-        const token = jwt.sign({ userId: user._id }, 'devTinder@7777', { expiresIn: '7d' });
+        const token = await user.getJWT();
 
         res.cookie('authToken', token, {expires: new Date(Date.now() + 7*24*60*60*1000)});
         res.send("User logged in successfully!");
