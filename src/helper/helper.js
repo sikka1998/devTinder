@@ -29,6 +29,14 @@ const validationOnSignUp = (req) => {
     }
 }
 
+const validationOnProfileEdit = (req) => {
+    const ALLOWED_UPDATES = ['firstName', 'lastName', 'bio', "age", "gender", "skills", "photoURL"];
+    const isEditValid = Object.keys(req.body).every((update) => ALLOWED_UPDATES.includes(update));
+
+    return isEditValid;
+}
+
 module.exports = {
-    validationOnSignUp
+    validationOnSignUp,
+    validationOnProfileEdit
 }

@@ -66,6 +66,11 @@ const userSchema = new mongoose.Schema({
                 throw new Error('Invalid URL format for photoURL');
             }
         }
+    },
+    bio: {
+        type: String,
+        trim: true,
+        maxLength: [250, 'Bio cannot exceed 250 characters']
     }
 }, { timestamps:  true });
 
