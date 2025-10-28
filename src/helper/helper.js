@@ -36,7 +36,21 @@ const validationOnProfileEdit = (req) => {
     return isEditValid;
 }
 
+const validationOnPasswordChange = (req) => {
+    const { emailId, newPassword } = req.body;
+        if(!validator.isEmail(emailId)) {
+            throw new Error("Invalid email format");
+        }else if(!validator.isStrongPassword(newPassword)){
+            throw new Error("Enter a Strong Password");
+        }
+        return {
+            emailId: emailId.trim(),
+            newPassword: newPassword.trim()
+        }
+}
+
 module.exports = {
     validationOnSignUp,
-    validationOnProfileEdit
+    validationOnProfileEdit,
+    validationOnPasswordChange
 }
